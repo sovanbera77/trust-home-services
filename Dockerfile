@@ -5,7 +5,7 @@ WORKDIR /app
 FROM base AS shared-builder
 COPY package.json package-lock.json* ./
 COPY packages/shared ./packages/shared
-RUN npm install && npm run build -w packages/shared
+RUN npm install
 
 # Build server
 FROM base AS server-builder
