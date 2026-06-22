@@ -89,7 +89,15 @@ class RealtimeService {
 
   sendLocation(data: { lat: number; lng: number; accuracy?: number; heading?: number; speed?: number }) {
     if (this.socket?.connected) {
-      this.socket.emit('location:update', data);
+      const store = useStore.getState();
+      const currentUser = store.currentUser;
+      const payload = {
+        ...data,
+        username: currentUser?.username || 'unknown',
+        name: currentUser?.name || 'Unknown',
+        timestamp: new Date().toISOString(),
+      };
+      this.socket.emit('location:update', payload);
     }
   }
 

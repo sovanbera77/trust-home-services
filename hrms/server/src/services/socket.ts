@@ -28,6 +28,12 @@ export function initSocket(httpServer: HTTPServer): Server {
     if (!userSockets.has(userId)) userSockets.set(userId, new Set());
     userSockets.get(userId)!.add(socket.id);
 
+    socket.on('location:update', (data) => {
+      // Broadcast this location update to all connected clients
+      // In a production app, we would only broadcast to relevant users (e.g. the assigned customer)
+      socket.broadcast.emit('location:employee_update', data);
+    });
+
     socket.on('disconnect', () => {
       const sockets = userSockets.get(userId);
       if (sockets) {

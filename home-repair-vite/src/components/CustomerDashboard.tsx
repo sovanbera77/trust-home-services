@@ -16,6 +16,7 @@ import {
   Wrench,
   Crown,
   Phone,
+  MapPin,
 } from 'lucide-react';
 import StatusBadge from './ui/StatusBadge';
 import ContactCard from './ui/ContactCard';
@@ -53,6 +54,7 @@ export default function CustomerDashboard() {
   const [showNewRequest, setShowNewRequest] = useState(false);
   const [showNewComplaint, setShowNewComplaint] = useState(false);
   const [chatDocketId, setChatDocketId] = useState<string | null>(null);
+  const [trackingDocketId, setTrackingDocketId] = useState<string | null>(null);
   const [showChatbot, setShowChatbot] = useState(false);
   const [timelineDocketId, setTimelineDocketId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -545,16 +547,29 @@ export default function CustomerDashboard() {
                         {t('customer.chat')}
                       </button>
                       {docket.assignedTo && (
-                        <button
-                          className="btn btn-secondary flex items-center gap-1.5 text-xs"
-                          onClick={() => {
-                            const emp = getEmployee(docket.assignedTo!);
-                            openCall(docket.assignedTo!, emp?.name || docket.assignedTo!, 'audio');
-                          }}
-                        >
-                          <Phone size={14} />
-                          {t('call.call')}
-                        </button>
+                        <>
+                          <button
+                            className="btn btn-secondary flex items-center gap-1.5 text-xs"
+                            onClick={() => {
+                              const emp = getEmployee(docket.assignedTo!);
+                              openCall(docket.assignedTo!, emp?.name || docket.assignedTo!, 'audio');
+                            }}
+                          >
+                            <Phone size={14} />
+                            {t('call.call')}
+                          </button>
+                          {docket.status === 'assigned' && (
+                            <button
+                              className="btn btn-secondary flex items-center gap-1.5 text-xs text-[#00a884] border-[#00a884]/30 bg-[#00a884]/10"
+                              onClick={() =>
+                                setTrackingDocketId(trackingDocketId === docket.id ? null : docket.id)
+                              }
+                            >
+                              <MapPin size={14} />
+                              {trackingDocketId === docket.id ? 'Hide Location' : 'Live Location'}
+                            </button>
+                          )}
+                        </>
                       )}
                     </>
                   )}
@@ -590,8 +605,18 @@ export default function CustomerDashboard() {
                     </button>
                   )}
                 </div>
+
+                {trackingDocketId === docket.id && docket.assignedTo && (
+                  <div className="mt-4 h-[300px] rounded-xl overflow-hidden border border-[#00a884]/30 shadow-[0_0_15px_rgba(0,168,132,0.1)]">
+                    <CustomerTracking 
+                      technicianUsername={docket.assignedTo} 
+                      technicianName={getEmployee(docket.assignedTo)?.name || docket.assignedTo} 
+                    />
+                  </div>
+                )}
+
                 {chatDocketId === docket.id && (
-                  <div className="bg-black/20 rounded-lg p-3 space-y-2">
+                  <div className="bg-black/20 rounded-lg p-3 space-y-2 mt-4">
                     {docket.chat.map((msg, i) => (
                       <div key={i} className="text-sm">
                         <span className="text-[#94a3b8] text-xs">{msg.sender}: </span>
