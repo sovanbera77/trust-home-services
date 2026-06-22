@@ -32,8 +32,10 @@ COPY --from=server-builder /app/packages/server/package.json ./packages/server/
 # Copy shared types (referenced by server at runtime)
 COPY --from=server-builder /app/packages/shared ./packages/shared
 
-# Create data directories
-RUN mkdir -p data uploads/invoices && chown -R appuser:nodejs data uploads
+# Create data directories where the server code expects them at runtime
+# upload.ts resolves: path.join(__dirname, '..', '..', 'uploads') => /app/packages/server/uploads
+RUN mkdir -p packages/server/uploads/invoices packages/server/data \
+    && chown -R appuser:nodejs packages/server/uploads packages/server/data
 
 # Vite frontend (served by Express)
 COPY --from=frontend-builder /app/home-repair-vite/dist ./frontend/dist
