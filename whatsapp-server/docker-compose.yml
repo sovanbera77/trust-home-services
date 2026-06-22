@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # OpenWA Gateway - sends real WhatsApp messages for OTP
+  openwa:
+    image: openwa/openwa:latest
+    container_name: openwa
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - openwa-data:/app/data
+      - openwa-sessions:/app/sessions
+    environment:
+      - TZ=Asia/Kolkata
+
+  # WhatsApp Business API server - Meta Cloud API integration
+  whatsapp-server:
+    build: .
+    container_name: whatsapp-server
+    restart: unless-stopped
+    ports:
+      - "3099:3099"
+    volumes:
+      - whatsapp-data:/app
+    environment:
+      - PORT=3099
+      - TRUSTHOME_API=http://host.docker.internal:3001/api
+
+volumes:
+  openwa-data:
+  openwa-sessions:
+  whatsapp-data:

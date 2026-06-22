@@ -1,0 +1,114 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'home-repair-vite/**'
+      - '.github/workflows/build-apk.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        working-directory: home-repair-vite
+        run: npm ci
+
+      - name: Build web app
+        working-directory: home-repair-vite
+        run: npx vite build
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'microsoft'
+          java-version: '21'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 36
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-36" || true
+          chmod -R 777 $ANDROID_HOME || true
+
+      - name: Add Capacitor Android platform
+        working-directory: home-repair-vite
+        run: |
+          rm -rf android
+          npx cap add android
+
+      - name: Sync Capacitor
+        working-directory: home-repair-vite
+        run: npx cap sync android
+
+      - name: Apply custom app icon and splash
+        working-directory: home-repair-vite
+        run: |
+          echo "=== Copying custom icon and splash assets ==="
+          # Copy mipmap icons
+          cp -r resources/android/mipmap-*/ android/app/src/main/res/
+          # Copy drawable splash screens
+          cp -r resources/android/drawable*/ android/app/src/main/res/
+          # Copy background color resource
+          cp resources/android/ic_launcher_background.xml android/app/src/main/res/values/
+          echo "=== Result ==="
+          find android/app/src/main/res -name "ic_launcher*" -o -name "splash*" | sort
+
+      - name: Patch Android build config
+        working-directory: home-repair-vite
+        run: |
+          sed -i 's|com\.android\.tools\.build:gradle:[0-9.]*|com.android.tools.build:gradle:8.9.1|' android/build.gradle
+          sed -i 's/minSdkVersion = 23/minSdkVersion = 24/' android/variables.gradle
+          sed -i 's/compileSdkVersion = 35/compileSdkVersion = 36/' android/variables.gradle
+          sed -i 's/targetSdkVersion = 35/targetSdkVersion = 36/' android/variables.gradle
+          echo "=== android/build.gradle ==="
+          head -12 android/build.gradle
+          echo "=== android/variables.gradle ==="
+          cat android/variables.gradle
+
+      - name: Build APK
+        id: build-apk
+        working-directory: home-repair-vite/android
+        run: |
+          ./gradlew assembleDebug --stacktrace 2>&1 | tee ../gradle.log
+          # Preserve pipeline exit code from gradle, not tee
+          exit ${PIPESTATUS[0]}
+
+      - name: Show build errors and APK output
+        if: always()
+        working-directory: home-repair-vite
+        run: |
+          echo "=== Last 100 lines of Gradle output ==="
+          tail -100 gradle.log
+          echo "=== Checking for FAILURE ==="
+          grep -ni "FAILED\|error\|exception" gradle.log | head -30 || echo "(no matches)"
+          echo "=== Searching for APK ==="
+          find android -name "*.apk" -type f 2>/dev/null || echo "No APK found"
+          echo "=== Android build output structure ==="
+          ls -la android/app/build/outputs/ 2>/dev/null || echo "No outputs dir"
+          ls -laR android/app/build/outputs/ 2>/dev/null | head -40
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-build-log
+          path: home-repair-vite/gradle.log
+
+      - name: Upload APK
+        if: steps.build-apk.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: home-repair-apk
+          path: home-repair-vite/android/app/build/outputs/apk/debug/app-debug.apk

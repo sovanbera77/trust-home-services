@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: home-repair-vite
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - hrms-backend
+
+  hrms-backend:
+    build:
+      context: hrms
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - JWT_SECRET=production-hrms-secret-key
+    volumes:
+      - hrms-data:/app/server/data
+      - hrms-uploads:/app/server/uploads
+
+  whatsapp-server:
+    build:
+      context: whatsapp-server
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3099
+      - TRUSTHOME_API=http://hrms-backend:5000/api
+    volumes:
+      - wa-config:/app/config
+      - wa-logs:/app/logs
+    depends_on:
+      - hrms-backend
+
+volumes:
+  hrms-data:
+  hrms-uploads:
+  wa-config:
+  wa-logs:

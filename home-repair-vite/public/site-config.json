@@ -1,0 +1,30 @@
+{
+  "plans": [
+    {
+      "name": "Basic Care",
+      "price": 499,
+      "interval": "quarterly",
+      "perks": ["1 free maintenance visit", "10% off all repairs", "Priority response"],
+      "popular": false,
+      "active": true
+    },
+    {
+      "name": "Home Shield",
+      "price": 1499,
+      "interval": "yearly",
+      "perks": ["4 maintenance visits", "15% off all repairs", "Emergency SOS priority", "Free seasonal AC servicing"],
+      "popular": true,
+      "active": true
+    },
+    {
+      "name": "Total Protection",
+      "price": 2999,
+      "interval": "yearly",
+      "perks": ["Unlimited maintenance visits", "25% off all repairs", "Same-day emergency response", "Dedicated service manager"],
+      "popular": false,
+      "active": true
+    }
+  ],
+  "background": null,
+  "bgOpacity": 0.4
+}

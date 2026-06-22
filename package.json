@@ -1,0 +1,20 @@
+{
+  "name": "trust-home-services",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:frontend\" \"npm run dev:whatsapp\"",
+    "dev:server": "npm run dev -w packages/server",
+    "dev:frontend": "cd home-repair-vite && npm run dev",
+    "dev:whatsapp": "cd whatsapp-server && node server.js",
+    "build": "npm run build -w packages/shared && npm run build -w packages/server && cd home-repair-vite && npm run build",
+    "lint": "cd home-repair-vite && npm run lint",
+    "typecheck": "npm run typecheck -w packages/shared && npm run typecheck -w packages/server && cd home-repair-vite && npx tsc --noEmit",
+    "db:migrate": "npm run db:migrate -w packages/server",
+    "db:seed": "npm run db:seed -w packages/server"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.4.0"
+  }
+}
