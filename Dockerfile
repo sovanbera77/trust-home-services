@@ -3,11 +3,13 @@ WORKDIR /app
 
 # Build shared types
 FROM base AS shared-builder
+COPY package.json package-lock.json* ./
 COPY packages/shared ./packages/shared
 RUN npm install && npm run build -w packages/shared
 
 # Build server
 FROM base AS server-builder
+COPY package.json package-lock.json* ./
 COPY --from=shared-builder /app/packages/shared ./packages/shared
 COPY packages/server ./packages/server
 RUN npm install && npm run build -w packages/server
